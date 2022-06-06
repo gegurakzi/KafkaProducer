@@ -36,8 +36,14 @@ public class KafkaApplication {
 
     private static CommandLine argParser(String[] args){
         Options options = new Options();     // Options Arguments which are Acceptable By Program.
-        Option key = new Option("c", "key", true, "keys and secrets path");
+        Option key = new Option("c", "config-key", true, "keys and secrets path");
         options.addOption(key);
+        Option job = new Option("j", "job-type", true, "SampledStream, FilteredStream");
+        job.setRequired(true);
+        options.addOption(job);
+        Option topic = new Option("t", "topic", true, "topic name");
+        job.setRequired(true);
+        options.addOption(topic);
         CommandLineParser parser = new BasicParser();
         // use to read Command Line Arguments
         HelpFormatter formatter = new HelpFormatter();  // // Use to Format
@@ -54,14 +60,16 @@ public class KafkaApplication {
 
     public static void main(String[] args) throws Exception {
         CommandLine cmd = argParser(args);
-        String key_path = cmd.getOptionValue("key");
+        String key_path = cmd.getOptionValue("config-key");
+        String job = cmd.getOptionValue("job-type");
+        String topic = cmd.getOptionValue("topic");
         if(key_path==null){
             key_path = System.getProperty("user.dir")+File.separator+"config.properties";
         }
         loadConfig(key_path);
 
         TwitterSampledStreamProducer twitterProducer = new TwitterSampledStreamProducer();
-        twitterProducer.launch("Twitter-test", bearer_token);
+        twitterProducer.launch("org.malachai.kafka.twitterAPI."+job, topic, bearer_token);
 
         //SampledStream sampledStream = new SampledStream();
         //sampledStream.testStream(bearer_token);

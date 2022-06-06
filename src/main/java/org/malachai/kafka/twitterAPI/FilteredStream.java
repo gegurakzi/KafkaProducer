@@ -24,16 +24,16 @@ import java.util.*;
 /*
  * Sample code to demonstrate the use of the Filtered Stream endpoint
  * */
-public class FilteredStream {
+public class FilteredStream extends BaseStream{
     // To set your enviornment variables in your terminal run the following line:
     // export 'BEARER_TOKEN'='<your_bearer_token>'
 
-    public BufferedReader getStreamReader(String bearerToken, HashMap<String, String> rules) throws IOException, URISyntaxException {
+    public BufferedReader getStreamReader(String bearerToken) throws IOException, URISyntaxException {
         BufferedReader reader = null;
         if (null != bearerToken) {
-            //Map<String, String> rules = new HashMap<>();
-            //rules.put("cats has:images", "cat images");
-            //rules.put("dogs has:images", "dog images");
+            Map<String, String> rules = new HashMap<>();
+            rules.put("cats has:images", "cat images");
+            rules.put("dogs has:images", "dog images");
             setupRules(bearerToken, rules);
             reader = connectStream(bearerToken);
         } else {
@@ -43,37 +43,9 @@ public class FilteredStream {
     }
 
     /*
-     * This method calls the filtered stream endpoint and streams Tweets from it
-     * */
-    private BufferedReader connectStream(String bearerToken) throws IOException, URISyntaxException {
-        BufferedReader reader = null;
-        HttpEntity entity = TwitterHttpResponseEntity.getEntity("https://api.twitter.com/2/tweets/search/stream", bearerToken);
-        if (null != entity) {
-            reader = new BufferedReader(new InputStreamReader((entity.getContent())));
-        }
-        return reader;
-    }
-
-
-    public void testStream(String bearerToken) throws IOException, URISyntaxException {
-        BufferedReader reader = null;
-        if (null != bearerToken) {
-            reader = connectStream(bearerToken);
-            String line = reader.readLine();
-            while (line != null) {
-                System.out.println(line);
-                line = reader.readLine();
-            }
-        } else {
-            System.out.println("There was a problem getting your bearer token. Please make sure you set the BEARER_TOKEN environment variable");
-        }
-    }
-
-
-    /*
      * Helper method to setup rules before streaming data
      * */
-    private static void setupRules(String bearerToken, Map<String, String> rules) throws IOException, URISyntaxException {
+    public static void setupRules(String bearerToken, Map<String, String> rules) throws IOException, URISyntaxException {
         List<String> existingRules = getRules(bearerToken);
         if (existingRules.size() > 0) {
             deleteRules(bearerToken, existingRules);
@@ -84,7 +56,7 @@ public class FilteredStream {
     /*
      * Helper method to create rules for filtering
      * */
-    private static void createRules(String bearerToken, Map<String, String> rules) throws URISyntaxException, IOException {
+    public static void createRules(String bearerToken, Map<String, String> rules) throws URISyntaxException, IOException {
         HttpClient httpClient = HttpClients.custom()
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setCookieSpec(CookieSpecs.STANDARD).build())
@@ -106,7 +78,7 @@ public class FilteredStream {
     /*
      * Helper method to get existing rules
      * */
-    private static List<String> getRules(String bearerToken) throws URISyntaxException, IOException {
+    public static List<String> getRules(String bearerToken) throws URISyntaxException, IOException {
         List<String> rules = new ArrayList<>();
         HttpClient httpClient = HttpClients.custom()
                 .setDefaultRequestConfig(RequestConfig.custom()
@@ -137,7 +109,7 @@ public class FilteredStream {
     /*
      * Helper method to delete rules
      * */
-    private static void deleteRules(String bearerToken, List<String> existingRules) throws URISyntaxException, IOException {
+    public static void deleteRules(String bearerToken, List<String> existingRules) throws URISyntaxException, IOException {
         HttpClient httpClient = HttpClients.custom()
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setCookieSpec(CookieSpecs.STANDARD).build())
