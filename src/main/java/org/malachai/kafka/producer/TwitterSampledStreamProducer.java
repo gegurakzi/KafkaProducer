@@ -14,6 +14,9 @@ import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.List;
@@ -60,12 +63,21 @@ public class TwitterSampledStreamProducer {
         }
     }
 
-    public void launch(String topic, String bearerToken){
+    public void launch(String className, String topic, String bearerToken){
         try {
             producer.beginTransaction();
 
-            SampledStream sampledStream = new SampledStream();
-            BufferedReader reader = sampledStream.getStreamReader(bearerToken);
+            Class cls = Class.forName(className);
+            Class partypes[] = new Class[1];
+            partypes[0] = String.class;
+            Method meth = null;
+            meth = cls.getMethod("getStreamReader", partypes);
+            Constructor<?> constructor = cls.getDeclaredConstructor();
+            if(!constructor.isAccessible()){
+                constructor.setAccessible(true);
+            }
+            Object stream = cls.newInstance();
+            BufferedReader reader = (BufferedReader) meth.invoke(stream, bearerToken);
 
             int i = 0;
             String line = reader.readLine();
@@ -75,7 +87,7 @@ public class TwitterSampledStreamProducer {
                 line = reader.readLine();
             }
             producer.commitTransaction();
-        } catch (ProducerFencedException | OutOfOrderSequenceException | AuthorizationException | IOException | URISyntaxException e) {
+        } catch (ProducerFencedException | OutOfOrderSequenceException | AuthorizationException | IOException e) {
             // We can't recover from these exceptions, so our only option is to close the producer and exit.
             log.error("closing the producer and exit: "+e);
             producer.close();
@@ -83,6 +95,16 @@ public class TwitterSampledStreamProducer {
             // For all other exceptions, just abort the transaction and try again.
             log.warn("aborting the transaction and try again: "+e);
             producer.abortTransaction();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
         }
     }
 
